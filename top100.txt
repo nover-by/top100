@@ -1,0 +1,102 @@
+#	Sangtitel	Kunstner(e)
+1	Lyse nætter	Alberte
+2	Kvinde min	Gasolin'
+3	Pianomand	Kim Larsen & Bellami
+4	Om lidt	Kim Larsen & Bellami
+5	Forårsdag	Anne Linnet
+6	I morgen er der også en dag	Andreas Odbjerg
+7	De smukke unge mennesker	Kim Larsen & Bellami
+8	Gi' mig danmark tilbage	Natasja
+9	Kald det kærlighed	Lars Lilholt Band
+10	Smuk som et stjerneskud	Brdr. Olsen
+11	Malaga	Thomas Helmig
+12	Costa del Sol (En inciterende flamenco)	C.V. Jørgensen
+13	Silverflame	Dizzy Mizz Lizzy
+14	Let Your Fingers Do The Walking	Sort Sol
+15	Svantes lykkelige dag	Benny Andersen & Povl Dissing
+16	Sleeping My Day Away	D.A.D
+17	Dansevise	Grethe & Jørgen Ingmann
+18	For evigt	Volbeat Feat. Johan Olsen
+19	Midt om natten	Kim Larsen
+20	Tusind stykker	Anne Linnet
+21	Barndommens gade	Anne Linnet
+22	7 Years	Lukas Graham
+23	Bag duggede ruder	TV-2
+24	Danmark	Shu-Bi-Dua
+25	Matador	Bent Fabricius-Bjerre
+26	I Danmark er jeg født	Poul Schierbeck. Tekst: H. C. Andersen
+27	En drøm om et menneske	APHACA
+28	Den røde tråd	Shu-Bi-Dua
+29	Kom tilbage nu	Danseorkestret
+30	Rabalderstræde	Gasolin'
+31	Under stjernerne på himlen	Tommy Seebach Band
+32	Sådan nogen som os	Poul Krebs
+33	Den blå anemone	Egil Harder. Tekst: Kaj Munk
+34	Dejlig er jorden	Tekst: B. S. Ingemann
+35	Man binder os på mund og hånd	Liva Weel
+36	Kys det nu (det satans liv)	TV-2
+37	Vågner i natten	Dodo & The Dodo's
+38	Frit land	Ulige Numre
+39	Barbie Girl	Aqua
+40	Hurtige hænder (Acoustic Version)	The Minds Of 99
+41	Du ligner din mor	Benjamin Hav Feat. Lukas Graham
+42	Elsker dig for evigt	Lars H.U.G.
+43	De første kærester på månen	TV-2
+44	Verden er i farver	Lis Sørensen
+45	Vi maler byen rød	Birthe Kjær
+46	Forelskelsessang (Du kom med alt...)	Per Warming. Tekst: Jens Rosendal
+47	Sæsonen er slut	C.V. Jørgensen
+48	I et land uden høje bjerge	Michael Falch
+49	Hele verden fra forstanden	TV-2
+50	En nat bliver det sommer	Love Shop
+#	Sangtitel	Kunstner(e)
+51	Se, nu stiger solen af havets skød	Oluf Ring. Tekst: Jakob Knudsen
+52	Stille før storm	Sebastian Feat. Lis Sørensen
+53	Solen er så rød mor	Carl Nielsen. Tekst: Harald Bergstedt
+54	En dag tilbage	Nik & Jay
+55	Vilde kaniner	Gnags
+56	Rocket Brothers	Kashmir
+57	Amager forbrænding	Carl Emil Petersen
+58	Du ikke alene	Sebastian
+59	Danmark	Gnags
+60	Alle skuffer over tid	The Minds Of 99
+61	Så længe jeg lever	John Mogensen
+62	Kun for mig	Medina
+63	The Second You Sleep	Saybia
+64	STOR MAND	Tobias Rahim & Andreas Odbjerg
+65	Hva' gør vi nu lille du	Gasolin'
+66	Novembervej	Nik & Jay
+67	Hil dig, Frelser og Forsoner	C. C. Hoffmann. Tekst: N. F. S. Grundtvig
+68	Hot	Nik & Jay
+69	Fuld af nattens stjerner	Sebastian Feat. Lis Sørensen
+70	Øde ø	Rasmus Seebach
+71	Under din sne	The Minds Of 99
+72	Igen og igen og	Nephew
+73	Hvalborg	Shu-Bi-Dua
+74	I en lille båd der gynger	Bamses Venner
+75	Danmark, nu blunder	Oluf Ring. Tekst: Thøger Larsen
+76	Buster	Nanna
+77	Mr. Swing King	Gnags
+78	Udenfor sæsonen	Johnny Madsen
+79	Hospital (Live Roskilde Festival 2007)	Nephew Feat. L.O.C.
+80	Riverside	Agnes Obel
+81	Stupid Man	Thomas Helmig
+82	Jonathan	Back To Back
+83	Blå himmel	Kesi Feat. Hans Philip
+84	Jeg ved det godt	Rugsted & Kreutzfeldt
+85	Transparent & Glasslike	Carpark North
+86	Played-A-Live (The Bongo Song)	Safri Duo
+87	What A Life	Scarlet Pleasure
+88	Comforting Sounds	Mew
+89	Smuk og dejlig	Shit & Chanel
+90	Der er noget galt i Danmark	John Mogensen
+91	Bellevue	C.V. Jørgensen
+92	Hvor længe vil du ydmyge dig?	Danser med Drenge
+93	Den jeg elsker, elsker jeg	Søs Fenger, Helmig, Salomonsen & Linnet
+94	Uden forsvar	Marie Key
+95	Vil du noget?	Guldimund & Saveus
+96	Natsværmer	Lars H.U.G.
+97	Knokler hårdt	Gilli
+98	Mormors kolonihavehus	Clausen & Petersen feat. Eva Madsen
+99	Jeg elsker kun dig	Bamses Venner
+100	Den bedste tid	One Two

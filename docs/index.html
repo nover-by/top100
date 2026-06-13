@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unbiased Top 100 — Danmark</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#e63946', light: '#ff6b6b' },
+            surface: { 900: '#f8fafc', 800: '#ffffff', 700: '#f1f5f9', 600: '#e2e8f0' }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['Syne', 'Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    body { background-color: #f8fafc; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+    /* Rank-change badges */
+    .badge-up   { background: rgba(34,197,94,.12); color: #16a34a; border: 1px solid rgba(34,197,94,.3); }
+    .badge-down { background: rgba(239,68,68,.10);  color: #dc2626; border: 1px solid rgba(239,68,68,.25); }
+    .badge-same { background: rgba(100,116,139,.10); color: #64748b; border: 1px solid rgba(100,116,139,.2); }
+
+    /* Smooth row hover */
+    .song-row { transition: background 0.15s ease; }
+    .song-row:hover { background: #f1f5f9; }
+
+    /* Header gradient */
+    .hero-gradient {
+      background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(230,57,70,.07) 0%, transparent 70%),
+                  linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    /* Tab active */
+    .tab-btn.active { color: #0f172a; border-bottom-color: #e63946; }
+    .tab-btn { border-bottom: 2px solid transparent; transition: border-color .2s, color .2s; }
+
+    /* Sticky header */
+    .table-header { position: sticky; top: 0; z-index: 10; }
+
+    /* Highlight big movers */
+    .big-mover-up   td:first-child { border-left: 3px solid #22c55e; }
+    .big-mover-down td:first-child { border-left: 3px solid #ef4444; }
+
+    /* Loading skeleton pulse */
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .skeleton { background: #e2e8f0; border-radius: 4px; animation: pulse 1.5s infinite; }
+  </style>
+</head>
+<body class="text-slate-800 font-sans antialiased min-h-screen bg-slate-50">
+
+  <!-- Hero -->
+  <header class="hero-gradient pt-16 pb-10 text-center px-4">
+    <div class="inline-flex items-center gap-2 text-xs font-medium tracking-widest uppercase text-brand mb-4 bg-brand/10 border border-brand/30 px-3 py-1 rounded-full">
+      Bayesian analysis
+    </div>
+    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight mb-3">
+      Unbiased Top 100
+    </h1>
+    <p class="text-slate-600 text-lg max-w-2xl mx-auto leading-relaxed">
+      DR's Top 100 was voted from an alphabetical list.
+      Artists early in the alphabet received a <span class="text-brand font-medium">systematic advantage</span>.
+      We remove it with a Bayesian model in PyMC.
+    </p>
+
+    <!-- Summary stats -->
+    <div id="stats-bar" class="mt-10 flex flex-wrap justify-center gap-6">
+      <div class="skeleton h-16 w-32 rounded-xl"></div>
+      <div class="skeleton h-16 w-32 rounded-xl"></div>
+      <div class="skeleton h-16 w-32 rounded-xl"></div>
+    </div>
+  </header>
+
+  <!-- Nav tabs -->
+  <div class="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <nav class="max-w-7xl mx-auto px-4 flex gap-6 overflow-x-auto scrollbar-none">
+      <button class="tab-btn active py-4 text-sm font-medium text-slate-500 whitespace-nowrap" data-tab="ranking">The Rankings</button>
+      <button class="tab-btn py-4 text-sm font-medium text-slate-500 whitespace-nowrap" data-tab="bias">Alphabetical Bias</button>
+      <button class="tab-btn py-4 text-sm font-medium text-slate-500 whitespace-nowrap" data-tab="about">About the Model</button>
+    </nav>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- ── Tab: Ranking ────────────────────────────────────────────────── -->
+    <section id="tab-ranking">
+
+      <!-- Controls -->
+      <div class="flex flex-wrap items-center gap-3 mb-6">
+        <input id="search-input" type="text" placeholder="Search by song or artist…"
+          class="flex-1 min-w-0 bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand/60 focus:ring-1 focus:ring-brand/20" />
+        <select id="sort-select"
+          class="bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-800 focus:outline-none focus:border-brand/60">
+          <option value="unbiased">Sort: Unbiased rank</option>
+          <option value="biased">Sort: Original rank</option>
+          <option value="delta_up">Biggest rise</option>
+          <option value="delta_down">Biggest drop</option>
+        </select>
+      </div>
+
+      <!-- Legend -->
+      <div class="flex flex-wrap gap-4 text-xs text-slate-500 mb-4">
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-sm bg-green-500/20 border border-green-500/40"></span>Rose 5+ places</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-sm bg-red-500/20 border border-red-500/40"></span>Dropped 5+ places</span>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto rounded-xl border border-slate-200">
+        <table class="w-full text-sm">
+          <thead class="table-header bg-slate-50/95 backdrop-blur">
+            <tr class="text-xs text-slate-500 uppercase tracking-wider">
+              <th class="px-4 py-3 text-left w-12">Unbiased</th>
+              <th class="px-4 py-3 text-left w-12">Original</th>
+              <th class="px-4 py-3 text-left">Song</th>
+              <th class="px-4 py-3 text-left hidden sm:table-cell">Artist</th>
+              <th class="px-4 py-3 text-center w-24 hidden sm:table-cell">Letter</th>
+              <th class="px-4 py-3 text-center w-28">Change</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-body" class="divide-y divide-slate-100">
+            <!-- filled by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Tab: Bias ───────────────────────────────────────────────────── -->
+    <section id="tab-bias" class="hidden">
+      <div class="grid lg:grid-cols-2 gap-8">
+
+        <!-- Letter count histogram -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+          <h2 class="font-display font-bold text-lg text-slate-900 mb-1">How Many Top-100 Songs per Initial Letter?</h2>
+          <p class="text-xs text-slate-500 mb-4">If voting were unbiased, songs would be spread roughly evenly across the alphabet. A skew toward early letters is direct evidence of primacy bias.</p>
+          <canvas id="letter-count-chart" height="120"></canvas>
+        </div>
+
+        <!-- Scatter chart -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+          <h2 class="font-display font-bold text-lg text-slate-900 mb-1">Alphabetical Bias</h2>
+          <p class="text-xs text-slate-500 mb-4">Each dot is a song. The regression line shows the estimated advantage of appearing early in the alphabet.</p>
+          <canvas id="bias-chart" height="300"></canvas>
+        </div>
+
+        <!-- Letter-group bars -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+          <h2 class="font-display font-bold text-lg text-slate-900 mb-1">Average Bias per Letter</h2>
+          <p class="text-xs text-slate-500 mb-4">Positive = artists with this initial letter were artificially voted up.</p>
+          <canvas id="letter-chart" height="300"></canvas>
+        </div>
+
+        <!-- Beta summary -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+          <h2 class="font-display font-bold text-lg text-slate-900 mb-3">Model Summary</h2>
+          <div id="beta-summary" class="grid sm:grid-cols-3 gap-4 text-center">
+            <div class="skeleton h-20 rounded-xl"></div>
+            <div class="skeleton h-20 rounded-xl"></div>
+            <div class="skeleton h-20 rounded-xl"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Tab: About ─────────────────────────────────────────────────── -->
+    <section id="tab-about" class="hidden max-w-3xl">
+      <div class="prose prose-slate max-w-none space-y-6 text-slate-600 leading-relaxed">
+        <h2 class="font-display text-2xl font-bold text-slate-900">What is the problem?</h2>
+        <p>DR's Top 100 is the result of an open vote where listeners picked up to 5 favourite songs from a long list sorted <strong>alphabetically by artist name</strong>.
+        This is a well-known phenomenon in behavioural economics ("primacy effect" and "top-of-list bias"): options early in a list are chosen more often because they are easier to notice and recall.</p>
+
+        <h2 class="font-display text-2xl font-bold text-slate-900">The Bayesian Model</h2>
+        <p>We use a simple Bayesian linear regression of log(votes) on alphabetical position — no per-song quality parameters:</p>
+        <pre class="bg-slate-100 rounded-xl px-5 py-4 text-sm font-mono text-slate-800 overflow-x-auto border border-slate-200">
+log(votes_i) ~ Normal(μ_i, σ)
+μ_i = α + β × pos_std_i
+
+α ~ Normal(mean_log_votes, 1)   # global intercept
+β ~ Normal(0, 0.5)              # alphabetical bias slope
+σ ~ HalfNormal(1)               # residual spread (quality + noise)</pre>
+        <p>Here <code>pos_std_i</code> is the artist’s letter position (A=1 … Å=29), standardised to mean 0 and SD 1.
+        A <strong>negative β</strong> means artists early in the alphabet tend to accumulate more votes on average.
+        σ honestly absorbs all unexplained variation — including genuine differences in song quality.</p>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 text-sm text-amber-800">
+          <strong>Important limitation:</strong> This model measures the observable <em>correlation</em> between alphabetical position and rank. It cannot fully separate genuine quality differences from voting bias — that would require the full ballot data (all ~200–300 songs that were available to vote on). The corrected ranking should be read as “what the order would look like if the average alphabetical advantage were removed”, not as an absolute ground truth.
+        </div>
+
+        <h2 class="font-display text-2xl font-bold text-slate-900">Vote Proxy</h2>
+        <p>DR did not release the raw vote counts, only the final rankings.
+        We use a linear proxy: <code>votes = 101 − rank</code>, so song #1 corresponds to 100 votes and song #100 to 1 vote.
+        The corrected ranking subtracts the estimated alphabetical contribution from each song’s log-votes and re-ranks.</p>
+
+        <h2 class="font-display text-2xl font-bold text-slate-900">Interpretation</h2>
+        <p>Songs by artists whose names start with A–C are estimated to have received the largest boost from the alphabetical list order.
+        The corrected ranking adjusts for this average effect. Songs by late-alphabet artists (S–Å) tend to move up; early-alphabet artists (A–C) tend to move down.
+        The effect is modest within the top 100 — the stronger signal is visible in the histogram: far more songs in the top 100 come from A–C artists than would be expected by chance.</p>
+
+        <h2 class="font-display text-2xl font-bold text-slate-900">Technical Details</h2>
+        <ul class="list-disc list-inside space-y-1 text-slate-500 text-sm">
+          <li>PyMC 6 — NUTS sampler, 4 chains × 2,000 draws (2,000 tune)</li>
+          <li>Model: Bayesian linear regression of log(votes) on alphabetical position</li>
+          <li>3 parameters: α (intercept), β (bias slope), σ (residual spread)</li>
+          <li>Convergence: R̂ = 1.00, ESS &gt; 7,000 for all parameters</li>
+          <li>Results saved to <code>docs/results.json</code></li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="mt-20 border-t border-slate-200 py-8 text-center text-xs text-slate-400">
+    Unbiased Top 100 &mdash; data from DR's Top 100 &middot; model and analysis: open-source
+    &middot; <a href="https://github.com" class="hover:text-slate-700 underline underline-offset-2">GitHub</a>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
