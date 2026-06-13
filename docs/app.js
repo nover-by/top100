@@ -26,9 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupTabs() {
   const buttons = document.querySelectorAll('.tab-btn');
   const sections = {
-    ranking: document.getElementById('tab-ranking'),
-    bias:    document.getElementById('tab-bias'),
-    about:   document.getElementById('tab-about'),
+    ranking:     document.getElementById('tab-ranking'),
+    bias:        document.getElementById('tab-bias'),
+    diagnostics: document.getElementById('tab-diagnostics'),
+    about:       document.getElementById('tab-about'),
   };
 
   buttons.forEach(btn => {

@@ -256,6 +256,130 @@ def save_results(records: list[dict], summary: dict, out_path: str = "docs/resul
 
 
 # ---------------------------------------------------------------------------
+# Arviz diagnostic plots → docs/plots/
+# ---------------------------------------------------------------------------
+def save_plots(idata, out_dir: str = "docs/plots"):
+    """
+    Save four diagnostic PNGs using matplotlib + raw posterior samples.
+    Avoids arviz_plots (1.x API is incompatible with older-style kwargs).
+    """
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from scipy.stats import gaussian_kde
+
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+
+    var_names = ["alpha", "beta", "sigma"]
+    labels    = {"alpha": "α (intercept)", "beta": "β (bias slope)", "sigma": "σ (residual)"}
+
+    # ── helper: extract (chains, draws) array ───────────────────────────
+    def get_samples(var):
+        arr = idata.posterior[var].values  # (chain, draw)
+        return arr  # shape (n_chains, n_draws)
+
+    n_chains = idata.posterior.sizes["chain"]
+    chain_colors = ["#6366f1", "#e63946", "#16a34a", "#f59e0b"][:n_chains]
+
+    # ── 1. Posterior distributions ───────────────────────────────────────
+    fig, axes = plt.subplots(1, 3, figsize=(11, 3.5))
+    fig.suptitle("Posterior distributions (94% HDI)", fontsize=12)
+    for ax, var in zip(axes, var_names):
+        samples = get_samples(var).flatten()
+        lo, hi = np.percentile(samples, [3, 97])
+        xs = np.linspace(samples.min(), samples.max(), 400)
+        kde = gaussian_kde(samples)
+        ys = kde(xs)
+        ax.plot(xs, ys, color="#6366f1", lw=2)
+        mask = (xs >= lo) & (xs <= hi)
+        ax.fill_between(xs[mask], ys[mask], alpha=0.25, color="#6366f1", label=f"94% HDI")
+        ax.axvline(samples.mean(), color="#e63946", lw=1.5, ls="--", label=f"mean={samples.mean():.3f}")
+        ax.set_title(labels[var], fontsize=10)
+        ax.set_xlabel("value"); ax.set_ylabel("density")
+        ax.legend(fontsize=8)
+        ax.spines[["top","right"]].set_visible(False)
+    plt.tight_layout()
+    plt.savefig(f"{out_dir}/posterior.png", dpi=130, bbox_inches="tight")
+    plt.close("all")
+    print(f"  Saved {out_dir}/posterior.png")
+
+    # ── 2. Trace plot ────────────────────────────────────────────────────
+    fig, axes = plt.subplots(3, 2, figsize=(11, 7))
+    fig.suptitle("Trace plot — MCMC chains", fontsize=12)
+    for row, var in enumerate(var_names):
+        arr = get_samples(var)   # (chains, draws)
+        ax_kde, ax_trace = axes[row]
+        for c in range(n_chains):
+            chain_samples = arr[c]
+            # KDE
+            xs = np.linspace(chain_samples.min(), chain_samples.max(), 300)
+            kde = gaussian_kde(chain_samples)
+            ax_kde.plot(xs, kde(xs), color=chain_colors[c], alpha=0.8, lw=1.5, label=f"chain {c}")
+            # Trace
+            ax_trace.plot(chain_samples, color=chain_colors[c], alpha=0.6, lw=0.5)
+        ax_kde.set_ylabel(labels[var], fontsize=9)
+        ax_kde.spines[["top","right"]].set_visible(False)
+        ax_trace.spines[["top","right"]].set_visible(False)
+        if row == 0:
+            ax_kde.set_title("KDE per chain"); ax_trace.set_title("Samples over iterations")
+    axes[-1][0].set_xlabel("density"); axes[-1][1].set_xlabel("iteration")
+    handles, lbls = axes[0][0].get_legend_handles_labels()
+    fig.legend(handles, lbls, loc="lower center", ncol=n_chains, fontsize=9, frameon=False)
+    plt.tight_layout(rect=[0, 0.04, 1, 1])
+    plt.savefig(f"{out_dir}/trace.png", dpi=130, bbox_inches="tight")
+    plt.close("all")
+    print(f"  Saved {out_dir}/trace.png")
+
+    # ── 3. Pair plot ─────────────────────────────────────────────────────
+    flat = {v: get_samples(v).flatten() for v in var_names}
+    fig, axes = plt.subplots(3, 3, figsize=(7, 7))
+    fig.suptitle("Joint posterior (pair plot)", fontsize=12)
+    for i, vi in enumerate(var_names):
+        for j, vj in enumerate(var_names):
+            ax = axes[i][j]
+            if i == j:
+                xs = np.linspace(flat[vi].min(), flat[vi].max(), 300)
+                ax.plot(xs, gaussian_kde(flat[vi])(xs), color="#6366f1", lw=2)
+                ax.set_yticks([])
+            elif i > j:
+                ax.scatter(flat[vj], flat[vi], s=1, alpha=0.15, color="#6366f1", rasterized=True)
+            else:
+                ax.set_visible(False)
+            if j == 0: ax.set_ylabel(labels[vi], fontsize=8)
+            if i == 2: ax.set_xlabel(labels[vj], fontsize=8)
+            ax.spines[["top","right"]].set_visible(False)
+    plt.tight_layout()
+    plt.savefig(f"{out_dir}/pair.png", dpi=130, bbox_inches="tight")
+    plt.close("all")
+    print(f"  Saved {out_dir}/pair.png")
+
+    # ── 4. Autocorrelation ───────────────────────────────────────────────
+    max_lag = 40
+    fig, axes = plt.subplots(n_chains, 3, figsize=(11, 2.2 * n_chains))
+    fig.suptitle("Autocorrelation (chain mixing)", fontsize=12)
+    for c in range(n_chains):
+        for j, var in enumerate(var_names):
+            ax = axes[c][j] if n_chains > 1 else axes[j]
+            s = get_samples(var)[c]
+            s = s - s.mean()
+            lags = range(max_lag + 1)
+            acf = [1.0] + [float(np.corrcoef(s[:-k], s[k:])[0, 1]) for k in range(1, max_lag + 1)]
+            ax.bar(lags, acf, color=chain_colors[c], alpha=0.7, width=0.8)
+            ax.axhline(0, color="black", lw=0.8)
+            ax.axhline(1.96 / np.sqrt(len(s)), color="grey", lw=0.8, ls="--")
+            ax.axhline(-1.96 / np.sqrt(len(s)), color="grey", lw=0.8, ls="--")
+            ax.set_ylim(-0.3, 1.05)
+            ax.spines[["top","right"]].set_visible(False)
+            if c == 0: ax.set_title(labels[var], fontsize=9)
+            if j == 0: ax.set_ylabel(f"chain {c}", fontsize=8)
+            if c == n_chains - 1: ax.set_xlabel("lag")
+    plt.tight_layout()
+    plt.savefig(f"{out_dir}/autocorr.png", dpi=130, bbox_inches="tight")
+    plt.close("all")
+    print(f"  Saved {out_dir}/autocorr.png")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
@@ -267,9 +391,47 @@ if __name__ == "__main__":
 
     records, summary = build_results(df, idata, pos_mean, pos_std)
     save_results(records, summary)
+    print("\nGenerating arviz diagnostic plots…")
+    save_plots(idata)
 
     # Print top-10 unbiased
     print("\n=== Unbiased Top 10 ===")
     for r in records[:10]:
         delta_str = f"+{r['rank_delta']}" if r["rank_delta"] > 0 else str(r["rank_delta"])
         print(f"  {r['rank_unbiased']:>3}. {r['song_title']:<40} {r['artist']:<30} (was #{r['rank_biased']}, {delta_str})")
+
+    # ── Counterfactual: what if Alberte were named Ålberte? ──────────────
+    print("\n=== Counterfactual: Alberte → Ålberte ===")
+    beta_mean = summary["beta_mean"]
+    pos_mean_val = summary["pos_mean"]
+    pos_std_val = summary["pos_std"]
+
+    pos_A  = LETTER_RANK["A"]   # = 1
+    pos_AA = LETTER_RANK["Å"]   # = 29
+
+    # Standardised positions
+    pos_A_std  = (pos_A  - pos_mean_val) / pos_std_val
+    pos_AA_std = (pos_AA - pos_mean_val) / pos_std_val
+
+    # Shift in log-votes when moving from A to Å
+    delta_log_votes = beta_mean * (pos_AA_std - pos_A_std)
+
+    # Find all Alberte songs in the results
+    alberte_songs = [r for r in records if "Alberte" in r["artist"] and "Ålberte" not in r["artist"]]
+
+    # Build a counterfactual ranking: adjust Alberte's corrected_log_votes
+    alberte_keys = {(r["song_title"], r["artist"]) for r in alberte_songs}
+    cf_records = []
+    for r in records:
+        if (r["song_title"], r["artist"]) in alberte_keys:
+            cf_records.append({**r, "cf_quality": r["posterior_quality"] + delta_log_votes})
+        else:
+            cf_records.append({**r, "cf_quality": r["posterior_quality"]})
+
+    cf_sorted = sorted(cf_records, key=lambda x: x["cf_quality"], reverse=True)
+    for new_rank, r in enumerate(cf_sorted, start=1):
+        if (r["song_title"], r["artist"]) in alberte_keys:
+            print(f"  '{r['song_title']}' by Alberte:")
+            print(f"    Original rank (biased):   #{r['rank_biased']}")
+            print(f"    Unbiased rank (as-is):    #{r['rank_unbiased']}")
+            print(f"    Counterfactual (Ålberte): #{new_rank}  (Δ log-votes = {delta_log_votes:+.4f})")
